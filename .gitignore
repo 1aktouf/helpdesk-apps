@@ -25,3 +25,6 @@ dist-ssr
 
 # Secrets
 .env
+
+# TLS certs (local dev only, never commit private keys)
+certs/

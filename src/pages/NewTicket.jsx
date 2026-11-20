@@ -1,25 +1,47 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { post } from '../api';
+import { useAuth } from '../AuthContext';
 
 export default function NewTicket() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     subject: '',
     category: 'technical',
     priority: 'medium',
     description: '',
   });
-  const [submitted, setSubmitted] = useState(null);
+  const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // TODO: replace with a real POST to the backend API once Dev A's endpoints exist
-    console.log('New ticket submitted:', form);
-    setSubmitted({ ...form, id: Date.now() });
-    setForm({ subject: '', category: 'technical', priority: 'medium', description: '' });
+    setError(null);
+    setSubmitting(true);
+    try {
+      const ticket = await post('/tickets', form);
+      setForm({ subject: '', category: 'technical', priority: 'medium', description: '' });
+      navigate(`/tickets?created=${ticket.id}`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (!user) {
+    return (
+      <div className="page">
+        <h1>Submit a Ticket</h1>
+        <p className="page-sub">You need to be logged in to submit a ticket.</p>
+      </div>
+    );
   }
 
   return (
@@ -27,11 +49,7 @@ export default function NewTicket() {
       <h1>Submit a Ticket</h1>
       <p className="page-sub">Describe your issue and we'll get back to you.</p>
 
-      {submitted && (
-        <div className="success-banner">
-          Ticket "{submitted.subject}" submitted (demo only — not sent anywhere yet).
-        </div>
-      )}
+      {error && <div className="error-banner">{error}</div>}
 
       <form className="card" onSubmit={handleSubmit}>
         <div className="field">
@@ -78,7 +96,9 @@ export default function NewTicket() {
           />
         </div>
 
-        <button type="submit" className="btn">Submit Ticket</button>
+        <button type="submit" className="btn" disabled={submitting}>
+          {submitting ? 'Submitting…' : 'Submit Ticket'}
+        </button>
       </form>
     </div>
   );

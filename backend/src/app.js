@@ -1,4 +1,5 @@
 import express from 'express';
+import helmet from 'helmet';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import { pool } from './db.js';
@@ -27,6 +28,7 @@ export function createApp() {
   app.locals.sessionCookieOptions = sessionCookieOptions;
   app.locals.sessionStore = new PgSession({ pool });
 
+  app.use(helmet());
   app.use(express.json({ limit: JSON_BODY_LIMIT }));
   app.use(
     session({
